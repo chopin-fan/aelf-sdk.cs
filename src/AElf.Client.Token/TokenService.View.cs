@@ -22,12 +22,14 @@ public partial class TokenService
 
     public async Task<GetBalanceOutput> GetTokenBalanceAsync(string symbol, Address owner)
     {
-        var useClientAlias = _clientConfigOptions.ClientAlias;
+        // var useClientAlias = _clientConfigOptions.ClientAlias;
+        var useClientAlias = "http://localhost:8001"; // side chain client
         var result = await _clientService.ViewSystemAsync(AElfTokenConstants.TokenSmartContractName, "GetBalance",
             new GetBalanceInput
             {
                 Owner = owner,
                 Symbol = symbol
+            // }, useClientAlias);
             }, useClientAlias);
         var balance = new GetBalanceOutput();
         balance.MergeFrom(result);

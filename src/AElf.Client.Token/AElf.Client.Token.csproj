@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>net6.0</TargetFramework>
+        <TargetFramework>net8.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <PackageId>AElf.Client.Token</PackageId>
@@ -13,6 +13,11 @@
     <ItemGroup>
       <ProjectReference Include="..\AElf.Client.CrossChain\AElf.Client.CrossChain.csproj" />
       <ProjectReference Include="..\AElf.Client.Core\AElf.Client.Core.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="AElf.CSharp.Core" Version="1.10.3.2" />
+      <PackageReference Include="AElf.Kernel.Types" Version="1.10.3.2" />
     </ItemGroup>
 
 </Project>
