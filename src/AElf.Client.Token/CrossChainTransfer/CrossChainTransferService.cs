@@ -95,10 +95,11 @@ public class CrossChainTransferService : ICrossChainTransferService, ITransientD
         });
         Logger.LogInformation("TransactionId="+transferResult.TransactionResult.TransactionId);
         var inlinetx = Transaction.Parser.ParseFrom(Convert.FromBase64String(VirtualTransactionCreated.Parser
-            .ParseFrom(transferResult.TransactionResult.Logs[2].Indexed[5]).InlineTransactionStr));
-        var inlineForTransactionId = VirtualTransactionCreated.Parser.ParseFrom(transferResult.TransactionResult.Logs
-            .Where(e => e.Name.Contains(nameof(VirtualTransactionCreated))).Select(e => e.Indexed[6]).First()).InlineForTransactionId;
+            .ParseFrom(transferResult.TransactionResult.Logs[2].Indexed[5]).InlineTransaction));
+        var inlineFactor = VirtualTransactionCreated.Parser.ParseFrom(transferResult.TransactionResult.Logs
+            .Where(e => e.Name.Contains(nameof(VirtualTransactionCreated))).Select(e => e.Indexed[6]).First()).InlineFactor;
         inlinetx.IsInlineTxWithId = true;
+        inlinetx.SetInlineHash(inlineFactor);
         // inlinetx.SetHash(Hash.LoadFromHex(inlineForTransactionId));
         Console.WriteLine("InlineTransactionId="+inlinetx.GetHash().ToHex());
         
@@ -131,7 +132,7 @@ public class CrossChainTransferService : ICrossChainTransferService, ITransientD
             // Query merkle path to prepare the data validation for cross-chain receive.
             var merklePath = await _clientService.GetMerklePathByTransactionIdAsync(
                 // transferResult.TransactionResult.TransactionId.ToHex(),
-                inlineForTransactionId,
+                inlinetx.GetHash().ToHex(),
                 fromClientAlias);
             Console.WriteLine("inlinedata="+JsonSerializer.Serialize(inlinetx));
             
@@ -148,6 +149,7 @@ public class CrossChainTransferService : ICrossChainTransferService, ITransientD
                 MerklePath = merklePath,
                 ParentChainHeight = transferResult.TransactionResult.BlockNumber,
                 TransferTransactionBytes = inlinetx.ToByteString(),
+                InlineFactor = inlineFactor
             };
             Console.WriteLine("crossChainReceiveTokenInput="+JsonSerializer.Serialize(crossChainReceiveTokenInput));
 

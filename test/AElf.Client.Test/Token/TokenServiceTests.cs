@@ -100,7 +100,9 @@ public sealed class TokenServiceTests : AElfClientAbpContractServiceTestBase
     }
     
     [Theory]
-    [InlineData("QxQpimticpTqXyQuv7WzP1ppDnvAu5cNKAsYY9iA9yFADYSb2,2kDAQLcUvTKRcA9hEWyW9bHF7D7zTbp7tYj2HHXaxRh6HkmANs", "ELF", 100000)]
+    [InlineData("QxQpimticpTqXyQuv7WzP1ppDnvAu5cNKAsYY9iA9yFADYSb2" +
+                ",2kDAQLcUvTKRcA9hEWyW9bHF7D7zTbp7tYj2HHXaxRh6HkmANs" +
+                ",QxQpimticpTqXyQuv7WzP1ppDnvAu5cNKAsYY9iA9yFADYSb2", "ELF", 100000)]
     public async Task BatchTransferTest(string addressArray, string symbol, long amount)
     {
         foreach (var address in addressArray.Split(","))
