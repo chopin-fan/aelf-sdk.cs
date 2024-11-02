@@ -102,6 +102,8 @@ public sealed class TokenServiceTests : AElfClientAbpContractServiceTestBase
     [Theory]
     [InlineData("QxQpimticpTqXyQuv7WzP1ppDnvAu5cNKAsYY9iA9yFADYSb2" +
                 ",2kDAQLcUvTKRcA9hEWyW9bHF7D7zTbp7tYj2HHXaxRh6HkmANs" +
+                ",JRmBduh4nXWi1aXgdUsj5gJrzeZb2LxmrAbf7W99faZSvoAaE" +
+                ",2JT8xzjR5zJ8xnBvdgBZdSjfbokFSbF5hDdpUCbXeWaJfPDmsK" +
                 ",QxQpimticpTqXyQuv7WzP1ppDnvAu5cNKAsYY9iA9yFADYSb2", "ELF", 100000)]
     public async Task BatchTransferTest(string addressArray, string symbol, long amount)
     {
@@ -148,5 +150,8 @@ public sealed class TokenServiceTests : AElfClientAbpContractServiceTestBase
         var tokenBalanceAsync3 = await _tokenService.GetTokenBalanceAsync("ELF",
             Address.FromBase58("2kDAQLcUvTKRcA9hEWyW9bHF7D7zTbp7tYj2HHXaxRh6HkmANs"));
         _testOutputHelper.WriteLine("Token balance: "+tokenBalanceAsync3.Balance.ToString());
+        var tokenBalanceAsync4 = await _tokenService.GetTokenBalanceAsync("ELF",
+            Address.FromBase58("2JT8xzjR5zJ8xnBvdgBZdSjfbokFSbF5hDdpUCbXeWaJfPDmsK"));
+        _testOutputHelper.WriteLine("Token balance: "+tokenBalanceAsync4.Balance.ToString());
     }
 }

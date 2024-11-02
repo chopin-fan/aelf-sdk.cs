@@ -37,4 +37,16 @@ public sealed class CrossChainTransferServiceTests : AElfClientAbpContractServic
             "MainNetMainChain", "TestNetSideChain2"
         );
     }
+    
+    [Theory]
+    [InlineData("2nSXrp4iM3A1gB5WKXjkwJQwy56jzcw1ESNpVnWywnyjXFixGc", "ELF", 3)]
+    public async Task CrossChainTransferWithVirtualInlineAsync(string address, string symbol, long amount)
+    {
+        await _crossChainTransferService.CrossChainTransferWithVritualInlineAsync(
+            Address.FromBase58("2FxTWccGgAQZ5ffS4UicQrd474CnJcYH8CBRcRYxhfrD4eMQdp"),
+            symbol,
+            amount,
+            "MainNetMainChain", "TestNetSideChain2"
+        );
+    }
 }

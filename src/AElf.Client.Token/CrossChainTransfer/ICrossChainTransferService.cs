@@ -6,4 +6,5 @@ public interface ICrossChainTransferService
 {
     Task CrossChainTransferAsync(Address to, string symbol, long amount, string fromClientAlias, string toClientAlias);
     Task CrossChainTransferWithInlineAsync(Address to, string symbol, long amount, string fromClientAlias, string toClientAlias);
+    Task CrossChainTransferWithVritualInlineAsync(Address to, string symbol, long amount, string fromClientAlias, string toClientAlias);
 }
