@@ -99,7 +99,7 @@ public class CrossChainTransferService : ICrossChainTransferService, ITransientD
         var inlineFactor = VirtualTransactionCreated.Parser.ParseFrom(transferResult.TransactionResult.Logs
             .Where(e => e.Name.Contains(nameof(VirtualTransactionCreated))).Select(e => e.Indexed[6]).First()).InlineFactor;
         inlinetx.IsInlineTxWithId = true;
-        inlinetx.SetInlineHash(inlineFactor);
+        inlinetx.SetInlineTxId(inlineFactor);
         // inlinetx.SetHash(Hash.LoadFromHex(inlineForTransactionId));
         Console.WriteLine("InlineTransactionId="+inlinetx.GetHash().ToHex());
         

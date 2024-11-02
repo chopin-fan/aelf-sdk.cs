@@ -27,7 +27,7 @@ public sealed class CrossChainTransferServiceTests : AElfClientAbpContractServic
         );
     }
     [Theory]
-    [InlineData("2nSXrp4iM3A1gB5WKXjkwJQwy56jzcw1ESNpVnWywnyjXFixGc", "ELF", 4)]
+    [InlineData("2nSXrp4iM3A1gB5WKXjkwJQwy56jzcw1ESNpVnWywnyjXFixGc", "ELF", 3)]
     public async Task CrossChainTransferWithInlineAsync(string address, string symbol, long amount)
     {
         await _crossChainTransferService.CrossChainTransferWithInlineAsync(
