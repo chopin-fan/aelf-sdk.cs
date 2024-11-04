@@ -94,27 +94,12 @@ public class CrossChainTransferService : ICrossChainTransferService, ITransientD
             Memo = "test1"
         });
         Logger.LogInformation("TransactionId="+transferResult.TransactionResult.TransactionId);
-        var inlinetx = Transaction.Parser.ParseFrom(Convert.FromBase64String(InlineWithTransactionIdCreated.Parser
-            .ParseFrom(transferResult.TransactionResult.Logs
-                .Where(e => e.Name.Contains(nameof(InlineWithTransactionIdCreated))).Select(e => e.Indexed[0]).First())
-            .InlineTransaction));
-        var inlineFactor = InlineWithTransactionIdCreated.Parser.ParseFrom(transferResult.TransactionResult.Logs
-            .Where(e => e.Name.Contains(nameof(InlineWithTransactionIdCreated))).Select(e => e.Indexed[1]).First()).InlineFactor;
+        var inlineWithTransactionIdCreated =ProtoExtensions.MergeFromIndexed<VirtualTransactionCreated>(transferResult.TransactionResult.Logs
+            .Where(e => e.Name.Contains(nameof(VirtualTransactionCreated))).First().Indexed);
+        var inlinetx = inlineWithTransactionIdCreated.InlineTransaction;
+        var inlineFactor = inlineWithTransactionIdCreated.InlineFactor;
         inlinetx.IsInlineTxWithId = true;
         inlinetx.SetInlineTxId(inlineFactor);
-        // inlinetx.SetHash(Hash.LoadFromHex(inlineForTransactionId));
-        Console.WriteLine("InlineTransactionId="+inlinetx.GetHash().ToHex());
-        
-        // First tx
-        // var crossChainTransferInput = new CrossChainTransferInput
-        // {
-        //     To = to,
-        //     Symbol = symbol,
-        //     Amount = amount,
-        //     ToChainId = ChainHelper.ConvertBase58ToChainId(toChainStatus.ChainId),
-        //     IssueChainId = tokenInfo.IssueChainId
-        // };
-        // var transferResult = await _tokenService.CrossChainTransferAsync(crossChainTransferInput, fromClientAlias);
         Logger.LogInformation("CrossChainTransfer: {ResultID}", transferResult.TransactionResult.TransactionId);
         if (transferResult.TransactionResult.Status == TransactionResultStatus.Mined)
         {
@@ -178,15 +163,9 @@ public class CrossChainTransferService : ICrossChainTransferService, ITransientD
             Memo = "test1"
         });
         Logger.LogInformation("TransactionId="+transferResult.TransactionResult.TransactionId);
-        // var transactionInline = Transaction.Parser.ParseFrom(Convert.FromBase64String(InlineWithTransactionIdCreated.Parser
-        //     .ParseFrom(transferResult.TransactionResult.Logs
-        //         .Where(e => e.Name.Contains(nameof(InlineWithTransactionIdCreated))).Select(e => e.Indexed[0]).First())).));
-        var inlinetx = Transaction.Parser.ParseFrom(Convert.FromBase64String(InlineWithTransactionIdCreated.Parser
-            .ParseFrom(transferResult.TransactionResult.Logs
-                .Where(e => e.Name.Contains(nameof(InlineWithTransactionIdCreated))).Select(e => e.Indexed[0]).First())
-            .InlineTransaction));
-        var inlineFactor = InlineWithTransactionIdCreated.Parser.ParseFrom(transferResult.TransactionResult.Logs
-            .Where(e => e.Name.Contains(nameof(InlineWithTransactionIdCreated))).Select(e => e.Indexed[1]).First()).InlineFactor;
+        var inlineWithTransactionIdCreated =ProtoExtensions.MergeFromIndexed<VirtualTransactionCreated>(transferResult.TransactionResult.Logs.First(e => e.Name.Contains(nameof(VirtualTransactionCreated))).Indexed);
+        var inlinetx = inlineWithTransactionIdCreated.InlineTransaction;
+        var inlineFactor = inlineWithTransactionIdCreated.InlineFactor;
         inlinetx.IsInlineTxWithId = true;
         inlinetx.SetInlineTxId(inlineFactor);
         
