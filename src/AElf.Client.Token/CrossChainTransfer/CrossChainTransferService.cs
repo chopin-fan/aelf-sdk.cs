@@ -7,6 +7,7 @@ using AElf.Client.Core.Options;
 using AElf.Contracts.MultiToken;
 using AElf.Contracts.MultiToken;
 using AElf.Types;
+using Google.Api;
 using Google.Protobuf;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -98,24 +99,25 @@ public class CrossChainTransferService : ICrossChainTransferService, ITransientD
         });
 
         var virtualCreatedLogs = transferResult.TransactionResult.Logs
-            .Where(p => p.Name.Equals(VirtualTransactionCreated.Descriptor.Name))
+            .Where(p => p.Name.Equals(CrossChainTransferred.Descriptor.Name))
             .ToList();
         if (!(transferResult.TransactionResult.Status == TransactionResultStatus.Mined && virtualCreatedLogs.Count > 0))
         {
             return;
         }
+
+        var index = 0;
         foreach (var virtualCreatedLog in virtualCreatedLogs)
         {
             virtualCreatedLog.Indexed.Add(virtualCreatedLog.NonIndexed);
-            var virtualTransactionCreated = ProtoExtensions.MergeFromIndexed<VirtualTransactionCreated>(virtualCreatedLog.Indexed);
+            var virtualTransactionCreated = ProtoExtensions.MergeFromIndexed<CrossChainTransferred>(virtualCreatedLog.Indexed);
 
-            var transaction = WrapTransaction(virtualTransactionCreated);
-            transaction.Signature = ByteString.Empty;
-            if (!virtualTransactionCreated.MethodName.Contains(".Transfer.CrossChainTransfer."))
+            if (transferResult.Transaction.MethodName.Equals(nameof(CrossChainTransfer)))
             {
                 continue;
             }
-            
+            var transaction = WrapTransaction(virtualTransactionCreated,transferResult,index);
+
             Logger.LogInformation("CrossChainTransfer: {ResultID}", transferResult.TransactionResult.TransactionId);
             if (transferResult.TransactionResult.Status == TransactionResultStatus.Mined)
             {
@@ -158,14 +160,22 @@ public class CrossChainTransferService : ICrossChainTransferService, ITransientD
         }
     }
 
-    private Transaction WrapTransaction(VirtualTransactionCreated inlineTx)
+    private Transaction WrapTransaction(CrossChainTransferred inlineTx, SendTransactionResult transferResult, int index)
     {
         return new Transaction()
         {
             From = inlineTx.From,
-            To = inlineTx.To,
-            MethodName = inlineTx.MethodName,
-            Params = inlineTx.Params,
+            To = Address.FromBase58("JRmBduh4nXWi1aXgdUsj5gJrzeZb2LxmrAbf7W99faZSvoAaE"),
+            MethodName = transferResult.Transaction.GetHash().ToHex()+"."+transferResult.Transaction.MethodName+"."+nameof(CrossChainTransfer)+"."+index,
+            Params = new CrossChainTransferInput
+            {
+                Symbol = inlineTx.Symbol,
+                To = inlineTx.To,
+                Amount = inlineTx.Amount,
+                Memo = inlineTx.Memo,
+                IssueChainId = inlineTx.IssueChainId,
+                ToChainId = inlineTx.ToChainId
+            }.ToByteString(),
         };
     }
 }
