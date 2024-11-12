@@ -17,8 +17,8 @@
     </ItemGroup>
 
     <ItemGroup>
-      <PackageReference Include="AElf.CSharp.Core" Version="1.10.3.7-preview" />
-      <PackageReference Include="AElf.Kernel.Types" Version="1.10.3.7-preview" />
+      <PackageReference Include="AElf.CSharp.Core" Version="1.10.2" />
+      <PackageReference Include="AElf.Kernel.Types" Version="1.10.2" />
     </ItemGroup>
 
 </Project>

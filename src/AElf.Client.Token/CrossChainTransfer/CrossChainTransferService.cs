@@ -82,75 +82,6 @@ public class CrossChainTransferService : ICrossChainTransferService, ITransientD
         }
     }
 
-    public async Task CrossChainTransferWithInlineAsync(Address to, string symbol, long amount, string fromClientAlias,
-        string toClientAlias)
-    {
-        var fromChainStatus = await _clientService.GetChainStatusAsync(fromClientAlias);
-        var toChainStatus = await _clientService.GetChainStatusAsync(toClientAlias);
-        var tokenInfo = await _tokenService.GetTokenInfoAsync(symbol);
-
-        var transferResult = await _tokenService.TransferAsync(new TransferInput
-        {
-            To = Address.FromBase58("2XHsq3pgWt6ep4Vx5RZKiowpr7MqXycAcPj26TQ7sEMD3ZFiha"),
-            Symbol = symbol,
-            Amount = amount,
-            Memo = "test1"
-        });
-        Logger.LogInformation("TransactionId=" + transferResult.TransactionResult.TransactionId);
-        var inlineWithTransactionIdCreated = ProtoExtensions.MergeFromIndexed<VirtualTransactionCreated>(transferResult
-            .TransactionResult.Logs
-            .Where(e => e.Name.Contains(nameof(VirtualTransactionCreated))).First().Indexed);
-        var inlinetx = inlineWithTransactionIdCreated.InlineTransaction;
-        var inlineFactor = inlineWithTransactionIdCreated.InlineFactor;
-        inlinetx.IsInlineTxWithId = true;
-        inlinetx.SetInlineTxId(inlineFactor);
-        Logger.LogInformation("CrossChainTransfer: {ResultID}", transferResult.TransactionResult.TransactionId);
-        if (transferResult.TransactionResult.Status == TransactionResultStatus.Mined)
-        {
-            while (true)
-            {
-                // Wait until the cross-chain indexing is done.
-                var chainStatus =
-                    await _clientService.GetChainStatusAsync(fromClientAlias);
-                Logger.LogInformation(
-                    "From chain lib height: {LibHeight}, Transfer tx package height: {TransferHeight}",
-                    chainStatus.LastIrreversibleBlockHeight, transferResult.TransactionResult.BlockNumber);
-                if (chainStatus.LastIrreversibleBlockHeight - transferResult.TransactionResult.BlockNumber > 100)
-                    break;
-                await Task.Delay(AElfTokenConstants.TenSeconds);
-            }
-
-            // Query merkle path to prepare the data validation for cross-chain receive.
-            var merklePath = await _clientService.GetMerklePathByTransactionIdAsync(
-                // transferResult.TransactionResult.TransactionId.ToHex(),
-                inlinetx.GetHash().ToHex(),
-                fromClientAlias);
-            Console.WriteLine("inlinedata=" + JsonSerializer.Serialize(inlinetx));
-
-            var protoData = inlinetx.ToByteArray();
-
-            // 序列化自定义属性（例如：以JSON或其他方式）
-            var customData = Encoding.UTF8.GetBytes(inlinetx.IsInlineTxWithId.ToString());
-
-            // 合并两个字节数组
-            ;
-            var crossChainReceiveTokenInput = new CrossChainReceiveTokenInput
-            {
-                FromChainId = ChainHelper.ConvertBase58ToChainId(fromChainStatus.ChainId),
-                MerklePath = merklePath,
-                ParentChainHeight = transferResult.TransactionResult.BlockNumber,
-                TransferTransactionBytes = inlinetx.ToByteString(),
-                InlineFactor = inlineFactor
-            };
-            Console.WriteLine("crossChainReceiveTokenInput=" + JsonSerializer.Serialize(crossChainReceiveTokenInput));
-
-            // Second tx
-            var crossChainReceiveTokenResult =
-                await _tokenService.CrossChainReceiveTokenAsync(crossChainReceiveTokenInput, toClientAlias);
-            Console.WriteLine("TransactionResult=" + crossChainReceiveTokenResult.TransactionResult);
-            Logger.LogInformation("CrossChainReceiveToken: {Result}", crossChainReceiveTokenResult.TransactionResult);
-        }
-    }
 
 
     public async Task CrossChainTransferWithVritualInlineAsync(Address to, string symbol, long amount,
@@ -158,9 +89,6 @@ public class CrossChainTransferService : ICrossChainTransferService, ITransientD
         string toClientAlias)
     {
         var fromChainStatus = await _clientService.GetChainStatusAsync(fromClientAlias);
-        var toChainStatus = await _clientService.GetChainStatusAsync(toClientAlias);
-        var tokenInfo = await _tokenService.GetTokenInfoAsync(symbol);
-
         var transferResult = await _tokenService.TransferAsync(new TransferInput
         {
             To = Address.FromBase58("2XHsq3pgWt6ep4Vx5RZKiowpr7MqXycAcPj26TQ7sEMD3ZFiha"),
@@ -178,18 +106,16 @@ public class CrossChainTransferService : ICrossChainTransferService, ITransientD
         }
         foreach (var virtualCreatedLog in virtualCreatedLogs)
         {
-            var inlineWithTransactionIdCreated = ProtoExtensions.MergeFromIndexed<VirtualTransactionCreated>(virtualCreatedLog.Indexed);
-            var inlineTx = inlineWithTransactionIdCreated.InlineTransaction;
-            var inlineFactor = inlineWithTransactionIdCreated.InlineFactor;
-            
-            if (inlineWithTransactionIdCreated.InlineFactor.IsNullOrEmpty() || inlineWithTransactionIdCreated.InlineTransaction == null)
+            virtualCreatedLog.Indexed.Add(virtualCreatedLog.NonIndexed);
+            var virtualTransactionCreated = ProtoExtensions.MergeFromIndexed<VirtualTransactionCreated>(virtualCreatedLog.Indexed);
+
+            var transaction = WrapTransaction(virtualTransactionCreated);
+            transaction.Signature = ByteString.Empty;
+            if (!virtualTransactionCreated.MethodName.Contains(".Transfer.CrossChainTransfer."))
             {
                 continue;
             }
             
-            inlineTx.IsInlineTxWithId = true;
-            inlineTx.SetInlineTxId(inlineFactor);
-
             Logger.LogInformation("CrossChainTransfer: {ResultID}", transferResult.TransactionResult.TransactionId);
             if (transferResult.TransactionResult.Status == TransactionResultStatus.Mined)
             {
@@ -201,7 +127,7 @@ public class CrossChainTransferService : ICrossChainTransferService, ITransientD
                     Logger.LogInformation(
                         "From chain lib height: {LibHeight}, Transfer tx package height: {TransferHeight}",
                         chainStatus.LastIrreversibleBlockHeight, transferResult.TransactionResult.BlockNumber);
-                    if (chainStatus.LastIrreversibleBlockHeight - transferResult.TransactionResult.BlockNumber > 100)
+                    if (chainStatus.LastIrreversibleBlockHeight - transferResult.TransactionResult.BlockNumber > 150)
                         break;
                     await Task.Delay(AElfTokenConstants.TenSeconds);
                 }
@@ -209,24 +135,15 @@ public class CrossChainTransferService : ICrossChainTransferService, ITransientD
                 // Query merkle path to prepare the data validation for cross-chain receive.
                 var merklePath = await _clientService.GetMerklePathByTransactionIdAsync(
                     // transferResult.TransactionResult.TransactionId.ToHex(),
-                    inlineTx.GetHash().ToHex(),
+                    transaction.GetHash().ToHex(),
                     fromClientAlias);
-                Console.WriteLine("inlinedata=" + JsonSerializer.Serialize(inlineTx));
 
-                var protoData = inlineTx.ToByteArray();
-
-                // 序列化自定义属性（例如：以JSON或其他方式）
-                var customData = Encoding.UTF8.GetBytes(inlineTx.IsInlineTxWithId.ToString());
-
-                // 合并两个字节数组
-                ;
                 var crossChainReceiveTokenInput = new CrossChainReceiveTokenInput
                 {
                     FromChainId = ChainHelper.ConvertBase58ToChainId(fromChainStatus.ChainId),
                     MerklePath = merklePath,
                     ParentChainHeight = transferResult.TransactionResult.BlockNumber,
-                    TransferTransactionBytes = inlineTx.ToByteString(),
-                    InlineFactor = inlineFactor
+                    TransferTransactionBytes = transaction.ToByteString(),
                 };
                 Console.WriteLine(
                     "crossChainReceiveTokenInput=" + JsonSerializer.Serialize(crossChainReceiveTokenInput));
@@ -239,5 +156,16 @@ public class CrossChainTransferService : ICrossChainTransferService, ITransientD
                     crossChainReceiveTokenResult.TransactionResult);
             }
         }
+    }
+
+    private Transaction WrapTransaction(VirtualTransactionCreated inlineTx)
+    {
+        return new Transaction()
+        {
+            From = inlineTx.From,
+            To = inlineTx.To,
+            MethodName = inlineTx.MethodName,
+            Params = inlineTx.Params,
+        };
     }
 }

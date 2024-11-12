@@ -11,7 +11,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="AElf.Types" Version="1.10.3.7-preview" />
+        <PackageReference Include="AElf.Types" Version="1.10.2" />
         <PackageReference Include="Google.Protobuf" Version="3.27.2" />
         <PackageReference Include="Grpc.Net.Client" Version="2.46.0" />
         <PackageReference Include="Grpc.Tools" Version="2.46.1" PrivateAssets="All" />

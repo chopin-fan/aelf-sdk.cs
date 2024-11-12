@@ -1,0 +1,159 @@
+@startuml
+skinparam dpi 300
+skinparam paperSize A4
+skinparam classAttributeIconSize 0
+skinparam classHeaderBackgroundColor #EEEBDC
+
+
+class Transaction {
+    +Address from
+    +Address to
+    +int ref_block_number
+    +int ref_block_prefix
+    +ExternalInfo external_info
+    +bytes signature
+}
+
+class TransactionTrace {
+    +bytes return_value
+    +string error
+    +repeated Transaction pre_transactions
+    +repeated TransactionTrace pre_traces
+    +repeated Transaction inline_transactions
+    +repeated TransactionTrace inline_traces
+    +repeated Transaction post_transactions
+    +repeated TransactionTrace post_traces
+    +repeated LogEvent logs
+    +long elapsed
+    +ExecutionStatus execution_status
+    +TransactionExecutingStateSet state_set
+}
+
+class ExecutionReturnSet {
+    +TransactionResultStatus status
+    +map<string, int64> state_changes
+    +map<string, bool> state_accesses
+    +bytes bloom
+    +bytes return_value
+    +map<string, bool> state_deletes
+    +TransactionResult transaction_result
+}
+
+class BlockHeader {
+    +int version
+    +int chain_id
+    +bytes previous_block_hash
+    +bytes merkle_tree_root_of_transactions
+    +bytes merkle_tree_root_of_world_state
+    +bytes bloom
+    +map<string, int64> extra_data
+    +google.protobuf.Timestamp time
+    +bytes merkle_tree_root_of_transaction_status
+    +bytes signer_pubkey
+    +bytes signature
+}
+
+class BlockBody {
+    +repeated bytes transaction_ids
+}
+
+class Block {
+    +BlockHeader header
+    +BlockBody body
+}
+
+class BlockStateSet {
+    +map<string, int64> changes
+    +repeated bytes deletes
+    +map<string, int64> block_executed_data
+}
+
+
+
+class Address {
+    +bytes value
+}
+
+class ExternalInfo {
+    +map<string, string> value
+}
+
+class StateValue {
+    +bytes current_value
+    +bytes original_value
+}
+
+class StateChange {
+    +StatePath state_path
+    +StateValue state_value
+}
+
+enum TransactionStatus {
+    UNKNOWN_TRANSACTION_STATUS
+    TRANSACTION_EXECUTING
+    TRANSACTION_EXECUTED
+}
+
+enum ExecutionStatus {
+    UNDEFINED
+    EXECUTED
+    CANCELED
+    SYSTEM_ERROR
+    CONTRACT_ERROR
+    EXCEEDED_MAX_CALL_DEPTH
+    PREFAILED
+    POSTFAILED
+}
+
+class LogEvent {
+    +Address address
+    +string name
+    +repeated bytes indexed
+    +bytes non_indexed
+}
+
+class ChainStateInfo {
+    +int chain_id
+    +int64 block_height
+}
+
+class ChainBlockLink {
+    +int height
+    +bool is_irreversible_block
+    +bool is_linked
+    +bool is_light_block
+}
+
+class Chain {
+    +int id
+    +int64 longest_chain_height
+    +int64 last_irreversible_block_height
+    +int64 best_chain_height
+}
+
+class BlockIndex {
+    +bytes block_hash
+    +int64 block_height
+}
+
+class TransactionBlockIndex {
+    +int64 block_height
+    +repeated BlockIndex previous_execution_block_index_list
+}
+
+class SmartContractAddress {
+    +Address address
+}
+
+' Relationships
+Transaction --> Address : from
+Transaction --> Address : to
+TransactionTrace --> Transaction : pre_transactions
+TransactionTrace --> Transaction : inline_transactions
+TransactionTrace --> Transaction : post_transactions
+TransactionTrace --> LogEvent : logs
+Block --> BlockHeader : header
+Block --> BlockBody : body
+TransactionBlockIndex --> BlockIndex : previous_execution_block_index_list
+
+@enduml

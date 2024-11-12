@@ -7,7 +7,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <PackageReference Include="AElf.Types" Version="1.10.3.7-preview" />
+      <PackageReference Include="AElf.Types" Version="1.10.2" />
     </ItemGroup>
 
 </Project>

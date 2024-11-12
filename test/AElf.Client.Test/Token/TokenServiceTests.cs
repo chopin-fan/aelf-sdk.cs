@@ -151,7 +151,7 @@ public sealed class TokenServiceTests : AElfClientAbpContractServiceTestBase
             Address.FromBase58("2kDAQLcUvTKRcA9hEWyW9bHF7D7zTbp7tYj2HHXaxRh6HkmANs"));
         _testOutputHelper.WriteLine("Token balance: "+tokenBalanceAsync3.Balance.ToString());
         var tokenBalanceAsync4 = await _tokenService.GetTokenBalanceAsync("ELF",
-            Address.FromBase58("2JT8xzjR5zJ8xnBvdgBZdSjfbokFSbF5hDdpUCbXeWaJfPDmsK"));
+            Address.FromBase58("JRmBduh4nXWi1aXgdUsj5gJrzeZb2LxmrAbf7W99faZSvoAaE"));
         _testOutputHelper.WriteLine("Token balance: "+tokenBalanceAsync4.Balance.ToString());
     }
 }
