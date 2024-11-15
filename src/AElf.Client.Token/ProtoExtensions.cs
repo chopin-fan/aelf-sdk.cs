@@ -14,8 +14,12 @@ namespace AElf.Client.Token;
             {
                 if (!property.CanRead || !property.CanWrite) continue;
                 var value = property.GetValue(source);
-                if (value != null)
+                if (value != null )
                 {
+                    if (value.GetType() == typeof(string) && string.IsNullOrEmpty(value.ToString()))
+                    {
+                        continue;
+                    }
                     property.SetValue(target, value);
                 }
             }

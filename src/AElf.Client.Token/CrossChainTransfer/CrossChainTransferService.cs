@@ -7,7 +7,6 @@ using AElf.Client.Core.Options;
 using AElf.Contracts.MultiToken;
 using AElf.Contracts.MultiToken;
 using AElf.Types;
-using Google.Api;
 using Google.Protobuf;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -98,26 +97,22 @@ public class CrossChainTransferService : ICrossChainTransferService, ITransientD
             Memo = "test1"
         });
 
-        var virtualCreatedLogs = transferResult.TransactionResult.Logs
-            .Where(p => p.Name.Equals(CrossChainTransferred.Descriptor.Name))
+        var inlineTxLogs = transferResult.TransactionResult.Logs
+            .Where(p => p.Name.Equals(InlineTransactionCreated.Descriptor.Name))
             .ToList();
-        if (!(transferResult.TransactionResult.Status == TransactionResultStatus.Mined && virtualCreatedLogs.Count > 0))
+        if (!(transferResult.TransactionResult.Status == TransactionResultStatus.Mined && inlineTxLogs.Count > 0))
         {
             return;
         }
-
-        var index = 0;
-        foreach (var virtualCreatedLog in virtualCreatedLogs)
+        foreach (var virtualCreatedLog in inlineTxLogs)
         {
-            virtualCreatedLog.Indexed.Add(virtualCreatedLog.NonIndexed);
-            var virtualTransactionCreated = ProtoExtensions.MergeFromIndexed<CrossChainTransferred>(virtualCreatedLog.Indexed);
-
-            if (transferResult.Transaction.MethodName.Equals(nameof(CrossChainTransfer)))
+            var inlineTransactionCreated = ProtoExtensions.MergeFromIndexed<InlineTransactionCreated>(virtualCreatedLog.Indexed);
+            var transaction = inlineTransactionCreated.Transaction;
+            if (!transaction.MethodName.Contains(".Transfer.CrossChainTransfer."))
             {
                 continue;
             }
-            var transaction = WrapTransaction(virtualTransactionCreated,transferResult,index);
-
+            
             Logger.LogInformation("CrossChainTransfer: {ResultID}", transferResult.TransactionResult.TransactionId);
             if (transferResult.TransactionResult.Status == TransactionResultStatus.Mined)
             {
@@ -158,24 +153,5 @@ public class CrossChainTransferService : ICrossChainTransferService, ITransientD
                     crossChainReceiveTokenResult.TransactionResult);
             }
         }
-    }
-
-    private Transaction WrapTransaction(CrossChainTransferred inlineTx, SendTransactionResult transferResult, int index)
-    {
-        return new Transaction()
-        {
-            From = inlineTx.From,
-            To = Address.FromBase58("JRmBduh4nXWi1aXgdUsj5gJrzeZb2LxmrAbf7W99faZSvoAaE"),
-            MethodName = transferResult.Transaction.GetHash().ToHex()+"."+transferResult.Transaction.MethodName+"."+nameof(CrossChainTransfer)+"."+index,
-            Params = new CrossChainTransferInput
-            {
-                Symbol = inlineTx.Symbol,
-                To = inlineTx.To,
-                Amount = inlineTx.Amount,
-                Memo = inlineTx.Memo,
-                IssueChainId = inlineTx.IssueChainId,
-                ToChainId = inlineTx.ToChainId
-            }.ToByteString(),
-        };
     }
 }
